@@ -1,0 +1,53 @@
+const { Builder, By, Key, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
+
+async function runTest() {
+    // Set up Chrome options
+    let chromeOptions = new chrome.Options();
+    chromeOptions.addArguments('--start-maximized');
+    
+    // Initialize Chrome driver
+    let driver = await new Builder().forBrowser('chrome').setChromeOptions(chromeOptions).build();
+
+    try {
+        // Navigate to the application URL
+        await driver.get('https://demo.dealsdray.com/');
+
+        // Find and fill the username field
+        await driver.findElement(By.id('username')).sendKeys('prexo.mis@dealsdray.com');
+
+        // Find and fill the password field
+        await driver.findElement(By.id('password')).sendKeys('prexo.mis@dealsdray.com');
+
+        // Find and click the login button
+        await driver.findElement(By.id('submit')).click();
+
+        // Wait until the page loads after login
+        await driver.wait(until.elementLocated(By.id('file-upload')), 10000);
+
+        // Upload the XLS file
+        let fileInput = await driver.findElement(By.id('file-upload'));
+        await fileInput.sendKeys('/path/to/demo-data.xlsx'); // Replace '/path/to/demo-data.xlsx' with the actual path of the XLS file
+
+        // Wait for the file to upload
+        await driver.wait(until.elementLocated(By.id('upload-success')), 10000);
+
+        // Take a screenshot of the final output page
+        await driver.takeScreenshot().then(
+            function(image, err) {
+                require('fs').writeFile('output_screenshot.png', image, 'base64', function(err) {
+                    console.log(err);
+                });
+            }
+        );
+
+    } catch (error) {
+        console.error('Error occurred:', error);
+    } finally {
+        // Close the browser after the test completes
+        await driver.quit();
+    }
+}
+
+// Run the test function
+runTest();
